@@ -1,5 +1,5 @@
 services:
-  backend:
+  rescatitas_backend:
     build:
       context: .
       dockerfile: Dockerfile
@@ -8,13 +8,13 @@ services:
     env_file:
       - .env
     depends_on:
-      - postgres
+      - rescatitas_postgres
     volumes:
       - .:/var/www/html
     networks:
       - rescatitas_network
 
-  postgres:
+  rescatitas_postgres:
     image: postgres:17
     ports:
       - '5432:5432'
