@@ -17,6 +17,34 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
+
+    protected $table = 'users';
+
+    protected $primaryKey = 'id';
+
+    protected $fillable = [
+        'nombre',
+        'apellido_paterno',
+        'apellido_materno',
+        'telefono',
+        'codigo_postal',
+        'colonia',
+        'municipio',
+        'estado',
+        'fecha_registro',
+        'fecha_nacimiento',
+        'confirmada',
+        'nivel',
+        'rol',
+    ];
+
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    public $timestamps = true;
+
     /**
      * Get the attributes that should be cast.
      *
@@ -29,4 +57,13 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function publicaciones() {
+        return $this->hasMany(Publicacion::class, 'id_usuario');
+    }
+
+    public function comentarios(){
+        return $this->hasMany(Comentario::class, 'id_usuario');
+    }
+
 }

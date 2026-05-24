@@ -17,7 +17,6 @@ return new class extends Migration
             $table->foreign('id_publicacion')
                 ->references('id_publicacion')->on('publicacion')
                 ->onDelete('cascade');
-            $table->string('ruta_imagen', 256);
             $table->text('url_imagen');
         });
     }
