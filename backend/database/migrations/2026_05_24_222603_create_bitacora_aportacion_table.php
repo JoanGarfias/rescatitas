@@ -19,7 +19,7 @@ return new class extends Migration
                 ->onDelete('cascade');
             $table->unsignedBigInteger('id_comentario')->nullable();
             $table->foreign('id_comentario')
-                ->references('id')->on('comentario')
+                ->references('id_comentario')->on('comentario')
                 ->onDelete('cascade');
             $table->enum('tipo_aportacion',[
                 'comentario',

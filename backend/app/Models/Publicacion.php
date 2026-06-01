@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Testing\Fluent\Concerns\Has;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Publicacion extends Model
 {
+    use HasFactory;
     protected $table = 'publicacion';
 
     protected $primaryKey = 'id_publicacion';
