@@ -18,10 +18,12 @@ return new class extends Migration
                 ->references('id')->on('users')
                 ->onDelete('cascade');
             $table->string('nombre_mascota', 128);
+            $table->enum('tipo_mascota', ['perro', 'gato', 'conejo', 'hamster', 'otro']);
+            $table->string('raza', 64);
             $table->text('descripcion');
             $table->date('fecha_desaparicion');
-            $table->string('lugar_desaparicion', 256)->nullable();
             $table->decimal('latitud', 10, 7)->nullable();
+            $table->string("direccion", 256)->nullable();
             $table->decimal('longitud', 10, 7)->nullable();
             //Pendiente apodos en array (sql)
             $table->enum('estado_mascota', [
@@ -35,11 +37,8 @@ return new class extends Migration
                 'cerrada',
                 'archivada'
             ])->default('activa');
-            $table->enum('tipo_publicacion', [
-                'perdido',
-                'encontrado'
-            ])->default('perdido');
             $table->unsignedBigInteger('id_rescatista')->nullable();
+            $table->string('imagen')->nullable();
             $table->foreign('id_rescatista')
                 ->references('id')->on('users')
                 ->onDelete('cascade');
