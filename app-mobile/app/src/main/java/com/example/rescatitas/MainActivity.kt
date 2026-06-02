@@ -4,64 +4,26 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.rescatitas.Classes.SessionManager
-import com.example.rescatitas.Services.PetService
-import com.example.rescatitas.Services.UserService
+import com.example.rescatitas.Classes.DependencyContainer
 import com.example.rescatitas.ui.*
 import com.example.rescatitas.ui.theme.RescatitasTheme
-import okhttp3.Interceptor
-import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val sessionManager = SessionManager(this)
-        val authViewModelFactory = AuthViewModelFactory(sessionManager)
         
-        val logging = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
-        }
-
-        // Este interceptor le pega el token a cada peticion si es que el usuario ya entro
-        val authInterceptor = Interceptor { chain ->
-            val token = sessionManager.fetchAuthToken()
-            val request = chain.request().newBuilder()
-            if (token != null) {
-                request.addHeader("Authorization", "Bearer $token")
-            }
-            chain.proceed(request.build())
-        }
-
-        val client = OkHttpClient.Builder()
-            .addInterceptor(logging)
-            .addInterceptor(authInterceptor)
-            .build()
-
-        val retrofit = Retrofit.Builder()
-            .baseUrl(Constants.BASE_URL)
-            .client(client)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
+        // Uso de una clase adicional para gestionar la logica de dependencias
+        val container = DependencyContainer(this)
         
-        val petService = retrofit.create(PetService::class.java)
-        val userService = retrofit.create(UserService::class.java)
-        
-        val petViewModelFactory = PetViewModelFactory(petService)
-        val profileViewModelFactory = ProfileViewModelFactory(userService, sessionManager)
+        val authViewModelFactory = AuthViewModelFactory(container.sessionManager)
+        val petViewModelFactory = PetViewModelFactory(container.petService)
+        val profileViewModelFactory = ProfileViewModelFactory(container.userService, container.sessionManager)
 
         enableEdgeToEdge()
         setContent {
@@ -71,11 +33,10 @@ class MainActivity : ComponentActivity() {
                 val petViewModel: PetViewModel = viewModel(factory = petViewModelFactory)
                 val profileViewModel: ProfileViewModel = viewModel(factory = profileViewModelFactory)
 
-                // Aqui controlamos hacia donde va el usuario en toda la app
                 NavHost(navController = navController, startDestination = "splash") {
                     composable("splash") {
                         SplashScreen(
-                            sessionManager = sessionManager,
+                            sessionManager = container.sessionManager,
                             onNavigateToLogin = {
                                 navController.navigate("login") {
                                     popUpTo("splash") { inclusive = true }

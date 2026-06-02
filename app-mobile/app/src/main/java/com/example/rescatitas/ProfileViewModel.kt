@@ -1,11 +1,9 @@
 package com.example.rescatitas
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.rescatitas.Classes.SessionManager
 import com.example.rescatitas.Models.User
 import com.example.rescatitas.Services.UserService
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
@@ -17,35 +15,44 @@ sealed class ProfileState {
     object LogoutSuccess : ProfileState()
 }
 
+// Clase derivada que hereda de BaseViewModel
 class ProfileViewModel(
     private val userService: UserService,
     private val sessionManager: SessionManager
-) : ViewModel() {
-    private val _profileState = MutableStateFlow<ProfileState>(ProfileState.Idle)
-    val profileState: StateFlow<ProfileState> = _profileState
+) : BaseViewModel<ProfileState>(ProfileState.Idle) {
+    
+    val profileState: StateFlow<ProfileState> = _state
 
     fun fetchProfile() {
         viewModelScope.launch {
-            _profileState.value = ProfileState.Loading
+            _state.value = ProfileState.Loading
             try {
                 val user = userService.getProfile()
-                _profileState.value = ProfileState.Success(user)
+                _state.value = ProfileState.Success(user)
             } catch (e: Exception) {
-                _profileState.value = ProfileState.Error(e.message ?: "Error al cargar perfil")
+                _state.value = ProfileState.Error(e.message ?: "Error al cargar perfil")
             }
         }
     }
 
+    // Sobrecarga de metodos: logout basico
     fun logout() {
+        logout(skipApi = false)
+    }
+
+    // Sobrecarga de metodos: logout con opcion de saltar la llamada al API
+    fun logout(skipApi: Boolean) {
         viewModelScope.launch {
-            _profileState.value = ProfileState.Loading
+            _state.value = ProfileState.Loading
             try {
-                userService.logout()
+                if (!skipApi) {
+                    userService.logout()
+                }
             } catch (e: Exception) {
-                // Ignore error on logout but clear session anyway
+                // Si el API falla, igual queremos limpiar la sesion local
             } finally {
                 sessionManager.clearAuthToken()
-                _profileState.value = ProfileState.LogoutSuccess
+                _state.value = ProfileState.LogoutSuccess
             }
         }
     }

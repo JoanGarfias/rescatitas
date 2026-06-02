@@ -3,8 +3,12 @@ package com.example.rescatitas.Classes
 import android.content.Context
 import android.content.SharedPreferences
 
-class SessionManager(context: Context) {
-    private val prefs: SharedPreferences = context.getSharedPreferences("rescatitas_prefs", Context.MODE_PRIVATE)
+class SessionManager(private val prefs: SharedPreferences) {
+
+    // Sobrecarga de constructor: permite inicializar con Context o directamente con SharedPreferences
+    constructor(context: Context) : this(
+        context.getSharedPreferences("rescatitas_prefs", Context.MODE_PRIVATE)
+    )
 
     companion object {
         const val USER_TOKEN = "user_token"
