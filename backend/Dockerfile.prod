@@ -1,5 +1,5 @@
 # Dockerfile simplificado para ambiente de pruebas/presentación
-FROM php:8.3-alpine
+FROM php:8.4-alpine
 
 # Instalar dependencias del sistema de una vez
 RUN apk add --no-cache \
