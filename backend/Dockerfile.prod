@@ -33,8 +33,9 @@ COPY . .
 RUN composer install --no-interaction --prefer-dist
 RUN npm install && npm run build
 
-# Ajustar permisos rápidos
-RUN chmod -R 777 storage bootstrap/cache
+# Crear carpetas si no existen y ajustar permisos rápidos
+RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache && \
+    chmod -R 777 storage bootstrap/cache
 
 # Exponer el puerto de artisan serve
 EXPOSE 8000
