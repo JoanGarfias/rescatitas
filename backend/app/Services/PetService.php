@@ -23,9 +23,9 @@ class PetService
 
     public function registerPet(array $data, ?UploadedFile $image = null)
     {
+        //guardamos en disco local, luego guardamos en R2
         if ($image) {
-            //guardamos en disco local, luego guardamos en R2
-            $data['imagen'] = $image->store('pets', 'public');
+            $data['imagen'] = FileCloudService::uploadFile($image, uniqid() . '.' . $image->getClientOriginalExtension());
         }
         $pet = Publicacion::create($data);
         return $pet;
@@ -41,7 +41,8 @@ class PetService
         return Publicacion::find($id);
     }
 
-    public function getPets(array $filters){
+    public function getPets(array $filters)
+    {
         $query = Publicacion::query();
 
         if (isset($filters['nombre_mascota'])) {

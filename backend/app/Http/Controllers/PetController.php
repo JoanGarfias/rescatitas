@@ -40,7 +40,7 @@ class PetController extends BaseController
             $pet = $this->petService->registerPet($data, $image);
         } catch (Exception $e) {
             return response()->json([
-                'message' => 'Error al registrar la mascota'
+                'message' => 'Error al registrar la mascota' . $e->getMessage()
             ], 500);
         }
 

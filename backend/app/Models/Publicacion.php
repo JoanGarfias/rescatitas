@@ -15,6 +15,8 @@ class Publicacion extends Model
     protected $fillable = [
         'id_usuario',
         'nombre_mascota',
+        'tipo_mascota',
+        'raza',
         'descripcion',
         'fecha_desaparicion',
         'longitud',
@@ -23,7 +25,7 @@ class Publicacion extends Model
         'direccion',
         'genero',
         'estado_publicacion',
-        'tipo_publicacion',
+        'imagen',
         'id_rescatista',
     ];
 
