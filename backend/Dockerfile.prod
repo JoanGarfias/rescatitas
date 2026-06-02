@@ -1,89 +1,44 @@
-# Stage 1: PHP Dependencies
-FROM php:8.5-fpm-alpine AS php_builder
+# Dockerfile simplificado para ambiente de pruebas/presentación
+FROM php:8.3-alpine
 
-# Install system dependencies
+# Instalar dependencias del sistema de una vez
 RUN apk add --no-cache \
     postgresql-dev \
     libzip-dev \
     zip \
     unzip \
     git \
-    icu-dev
+    nodejs \
+    npm \
+    icu-dev \
+    libpq \
+    icu-libs
 
-# Install PHP extensions
+# Instalar extensiones PHP necesarias
 RUN docker-php-ext-install \
     pdo_pgsql \
-    pdo \
-    pgsql \
     zip \
     bcmath \
-    intl \
-    opcache
+    intl
 
-# Install Composer
+# Instalar Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
+
+# Copiar el proyecto
 COPY . .
 
-# Install PHP dependencies
-RUN composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+# Instalar dependencias e iniciar la app
+RUN composer install --no-interaction --prefer-dist
+RUN npm install && npm run build
 
+# Ajustar permisos rápidos
+RUN chmod -R 777 storage bootstrap/cache
 
-# Stage 2: Node Assets
-FROM node:20-alpine AS node_builder
+# Exponer el puerto de artisan serve
+EXPOSE 8000
 
-WORKDIR /var/www/html
-COPY --from=php_builder /var/www/html .
+# Comando para correr la app directamente (más fácil para pruebas)
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
 
-# Install NPM dependencies and build assets
-RUN npm install
-RUN npm run build
-
-
-# Stage 3: Final Production Image
-FROM php:8.5-fpm-alpine
-
-# Install build dependencies and persistent libraries
-RUN apk add --no-cache --virtual .build-deps \
-    postgresql-dev \
-    libzip-dev \
-    icu-dev \
-    zlib-dev \
-    linux-headers \
-    $PHPIZE_DEPS \
-    && apk add --no-cache \
-    libpq \
-    libzip \
-    icu-libs
-
-# Install PHP extensions
-RUN docker-php-ext-install \
-    pdo_pgsql \
-    pdo \
-    pgsql \
-    zip \
-    bcmath \
-    intl \
-    opcache \
-    && apk del .build-deps
-
-# Set labels for OCI
-LABEL org.opencontainers.image.source="https://github.com/joangarfias/rescatitas"
-LABEL org.opencontainers.image.description="Rescatitas Backend Production Image"
-
-# Copy application from builders
-WORKDIR /var/www/html
-COPY --from=node_builder --chown=www-data:www-data /var/www/html .
-
-# Copy production PHP configuration
-COPY docker/php/production.ini /usr/local/etc/php/conf.d/production.ini
-
-# Set permissions for Laravel
-RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
-
-# Expose port 9000 for PHP-FPM
-EXPOSE 9000
-
-# Command to run PHP-FPM
-CMD ["php-fpm"]
