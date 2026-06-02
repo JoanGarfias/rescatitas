@@ -50,7 +50,7 @@ RUN apk add --no-cache --virtual .build-deps \
     libzip-dev \
     icu-dev \
     zlib-dev \
-    linux-headers-v6.6 \
+    linux-headers \
     $PHPIZE_DEPS \
     && apk add --no-cache \
     libpq \
