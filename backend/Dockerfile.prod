@@ -44,13 +44,20 @@ RUN npm run build
 # Stage 3: Final Production Image
 FROM php:8.5-fpm-alpine
 
-# Install persistent system dependencies
-RUN apk add --no-cache \
+# Install build dependencies and persistent libraries
+RUN apk add --no-cache --virtual .build-deps \
+    postgresql-dev \
+    libzip-dev \
+    icu-dev \
+    zlib-dev \
+    linux-headers-v6.6 \
+    $PHPIZE_DEPS \
+    && apk add --no-cache \
     libpq \
     libzip \
     icu-libs
 
-# Install PHP extensions (including opcache for performance)
+# Install PHP extensions
 RUN docker-php-ext-install \
     pdo_pgsql \
     pdo \
@@ -58,7 +65,8 @@ RUN docker-php-ext-install \
     zip \
     bcmath \
     intl \
-    opcache
+    opcache \
+    && apk del .build-deps
 
 # Set labels for OCI
 LABEL org.opencontainers.image.source="https://github.com/joangarfias/rescatitas"
