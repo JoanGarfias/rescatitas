@@ -1,0 +1,50 @@
+services:
+  nginx:
+    image: nginx:stable-alpine
+    ports:
+      - '80:80'
+    volumes:
+      - ./nginx/backend.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - rescatitas_backend
+    networks:
+      - rescatitas_network
+  rescatitas_backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    env_file:
+      - .env
+    depends_on:
+      - rescatitas_postgres
+    networks:
+      - rescatitas_network
+
+  rescatitas_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    command: php artisan queue:work --verbose --tries=3 --timeout=90
+    env_file:
+      - .env
+    depends_on:
+      - rescatitas_postgres
+    networks:
+      - rescatitas_network
+
+  rescatitas_postgres:
+    image: postgres:17
+    ports:
+      - '5432:5432'
+    env_file:
+      - .env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - rescatitas_network
+volumes:
+  postgres_data:
+
+networks:
+  rescatitas_network:
+    driver: bridge
