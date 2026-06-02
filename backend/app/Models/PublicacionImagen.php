@@ -18,6 +18,8 @@ class PublicacionImagen extends Model
         'url_imagen',
     ];
 
+    public $timestamps = false;
+
     public function publicacion(){
         return $this->belongsTo(Publicacion::class, 'id_publicacion');
     }
