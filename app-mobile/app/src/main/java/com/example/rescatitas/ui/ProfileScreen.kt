@@ -82,21 +82,21 @@ fun ProfileScreen(
                         }
 
                         Text(
-                            text = "${user.nombre} ${user.apellido_paterno}",
+                            text = "${user.nombre ?: ""} ${user.apellido_paterno ?: ""}",
                             fontSize = 22.sp,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(top = 16.dp)
                         )
                         Text(
-                            text = user.email,
+                            text = user.email ?: "",
                             fontSize = 14.sp,
                             color = Color.Gray
                         )
 
                         Spacer(modifier = Modifier.height(32.dp))
 
-                        ProfileInfoItem(icon = Icons.Default.Phone, label = "Teléfono", value = user.telefono)
-                        ProfileInfoItem(icon = Icons.Default.LocationOn, label = "Ubicación", value = "${user.municipio}, ${user.estado}")
+                        ProfileInfoItem(icon = Icons.Default.Phone, label = "Teléfono", value = user.telefono ?: "No especificado")
+                        ProfileInfoItem(icon = Icons.Default.LocationOn, label = "Ubicación", value = "${user.municipio ?: ""}, ${user.estado ?: ""}")
                         ProfileInfoItem(icon = Icons.Default.Cake, label = "Fecha de Nacimiento", value = user.fecha_nacimiento ?: "No especificada")
 
                         Spacer(modifier = Modifier.weight(1f))

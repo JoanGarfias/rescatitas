@@ -21,7 +21,7 @@ class MainActivity : ComponentActivity() {
         // Uso de una clase adicional para gestionar la logica de dependencias
         val container = DependencyContainer(this)
         
-        val authViewModelFactory = AuthViewModelFactory(container.sessionManager)
+        val authViewModelFactory = AuthViewModelFactory(container.userService, container.sessionManager)
         val petViewModelFactory = PetViewModelFactory(container.petService)
         val profileViewModelFactory = ProfileViewModelFactory(container.userService, container.sessionManager)
 

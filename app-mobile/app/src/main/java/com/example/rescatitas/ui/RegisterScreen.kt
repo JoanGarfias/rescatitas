@@ -63,9 +63,15 @@ fun RegisterScreen(
     val context = LocalContext.current
 
     LaunchedEffect(authState) {
-        if (authState is AuthState.Success) {
-            Toast.makeText(context, "¡Cuenta creada con éxito!", Toast.LENGTH_LONG).show()
-            onRegisterSuccess()
+        when (authState) {
+            is AuthState.Success -> {
+                Toast.makeText(context, "¡Cuenta creada con éxito!", Toast.LENGTH_LONG).show()
+                onRegisterSuccess()
+            }
+            is AuthState.Error -> {
+                Toast.makeText(context, (authState as AuthState.Error).message, Toast.LENGTH_LONG).show()
+            }
+            else -> {}
         }
     }
 
@@ -127,7 +133,7 @@ fun RegisterScreen(
                     SectionHeader(icon = Icons.Default.Person, title = "Datos Personales")
                     
                     RegisterField(label = "Nombre", value = nombre, onValueChange = { nombre = it }, placeholder = "Ingresa tu nombre")
-                    RegisterField(label = "Fecha de Nacimiento", value = fechaNacimiento, onValueChange = { fechaNacimiento = it }, placeholder = "dd/mm/aaaa")
+                    RegisterField(label = "Fecha de Nacimiento", value = fechaNacimiento, onValueChange = { fechaNacimiento = it }, placeholder = "Ej: 1995-05-15")
                     RegisterField(label = "Apellido Paterno", value = apellidoPaterno, onValueChange = { apellidoPaterno = it }, placeholder = "Primer apellido")
                     RegisterField(label = "Apellido Materno", value = apellidoMaterno, onValueChange = { apellidoMaterno = it }, placeholder = "Segundo apellido")
                     RegisterField(label = "Teléfono", value = telefono, onValueChange = { telefono = it }, placeholder = "+52 10 dígitos")
@@ -179,17 +185,29 @@ fun RegisterScreen(
 
                     Button(
                         onClick = {
+                            if (password != confirmPassword) {
+                                Toast.makeText(context, "Las contraseñas no coinciden", Toast.LENGTH_SHORT).show()
+                                return@Button
+                            }
+                            if (nombre.isBlank() || email.isBlank() || password.isBlank() || fechaNacimiento.isBlank()) {
+                                Toast.makeText(context, "Por favor completa los campos requeridos", Toast.LENGTH_SHORT).show()
+                                return@Button
+                            }
+
+                            // Aseguramos que la fecha tenga el formato que el backend espera
+                            val formattedDate = fechaNacimiento.trim()
+                            
                             val request = RegisterUserRequest(
-                                nombre = nombre,
-                                apellido_paterno = apellidoPaterno,
-                                apellido_materno = apellidoMaterno,
-                                telefono = telefono,
-                                codigo_postal = codigoPostal,
-                                colonia = colonia,
-                                municipio = municipio,
-                                estado = estado,
-                                fecha_nacimiento = fechaNacimiento,
-                                email = email,
+                                nombre = nombre.trim(),
+                                apellido_paterno = apellidoPaterno.trim(),
+                                apellido_materno = apellidoMaterno.trim(),
+                                telefono = telefono.trim(),
+                                codigo_postal = codigoPostal.trim(),
+                                colonia = colonia.trim(),
+                                municipio = municipio.trim(),
+                                estado = if (estado == "Selecciona un estado") "" else estado,
+                                fecha_nacimiento = formattedDate,
+                                email = email.trim(),
                                 password = password,
                                 password_confirmation = confirmPassword,
                                 device_name = "android_device"
@@ -206,6 +224,16 @@ fun RegisterScreen(
                         } else {
                             Text("Crear Cuenta", fontSize = 16.sp)
                         }
+                    }
+
+                    if (authState is AuthState.Error) {
+                        Text(
+                            text = (authState as AuthState.Error).message,
+                            color = Color.Red,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(top = 8.dp),
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
                     }
                     
                     TextButton(
