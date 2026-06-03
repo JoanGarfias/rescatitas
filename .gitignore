@@ -1,3 +1,4 @@
 .env
 vendor/
 storage/
+backend/resources/views/scribe/index.blade.php
