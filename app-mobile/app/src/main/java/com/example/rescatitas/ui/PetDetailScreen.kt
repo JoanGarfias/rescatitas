@@ -108,13 +108,6 @@ fun PetDetailScreen(
                             
                             Row {
                                 IconButton(
-                                    onClick = { /* Share */ },
-                                    modifier = Modifier.background(Color.White.copy(alpha = 0.5f), CircleShape)
-                                ) {
-                                    Icon(Icons.Default.Share, contentDescription = "Compartir")
-                                }
-                                Spacer(modifier = Modifier.width(8.dp))
-                                IconButton(
                                     onClick = { viewModel.toggleFavorite(petId) },
                                     modifier = Modifier.background(Color.White.copy(alpha = 0.5f), CircleShape)
                                 ) {
@@ -125,23 +118,6 @@ fun PetDetailScreen(
                                     )
                                 }
                             }
-                        }
-
-                        // Status Tag
-                        Surface(
-                            modifier = Modifier
-                                .align(Alignment.TopEnd)
-                                .padding(top = 80.dp, end = 16.dp),
-                            color = Color(0xFFFF5252),
-                            shape = RoundedCornerShape(16.dp)
-                        ) {
-                            Text(
-                                text = "• PERDIDO",
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 12.sp,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                            )
                         }
                     }
 
@@ -201,10 +177,24 @@ fun PetDetailScreen(
 
                         Spacer(modifier = Modifier.height(24.dp))
                         
-                        // Characteristics (Mock Tags based on image)
+                        // Characteristics
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            InfoTag(icon = Icons.Default.Inventory, text = "Collar azul")
-                            InfoTag(icon = Icons.Default.Grid4x4, text = "Microchip")
+                            val genderIcon = if (pet.genero == "macho") Icons.Default.Male else Icons.Default.Female
+                            val genderText = pet.genero.replaceFirstChar { it.uppercase() }
+                            InfoTag(icon = genderIcon, text = genderText)
+                            
+                            val isEncontrado = pet.estado_mascota == "encontrado"
+                            val stateIcon = if (isEncontrado) Icons.Default.Check else Icons.Default.QuestionMark
+                            val stateText = if (isEncontrado) "Encontrado" else "Perdido"
+                            val stateContainerColor = if (isEncontrado) Color(0xFFE8F5E9) else Color(0xFFFFF3E0)
+                            val stateContentColor = if (isEncontrado) Color(0xFF2E7D32) else Color(0xFFEF6C00)
+                            
+                            InfoTag(
+                                icon = stateIcon,
+                                text = stateText,
+                                containerColor = stateContainerColor,
+                                contentColor = stateContentColor
+                            )
                         }
 
                         Spacer(modifier = Modifier.height(32.dp))
@@ -257,7 +247,7 @@ fun PetDetailScreen(
                                     Icon(Icons.Default.Person, contentDescription = null, modifier = Modifier.padding(8.dp))
                                 }
                                 Column(modifier = Modifier.padding(start = 12.dp).weight(1f)) {
-                                    Text("Publicado por Usuario", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                    Text("Publicado por ", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                                     Text("Dueño de ${pet.nombre_mascota}", fontSize = 12.sp, color = Color.Gray)
                                     pet.telefono?.let {
                                         Text(it, fontSize = 11.sp, color = Color.Gray)
@@ -343,18 +333,23 @@ fun PetDetailScreen(
 }
 
 @Composable
-fun InfoTag(icon: ImageVector, text: String) {
+fun InfoTag(
+    icon: ImageVector,
+    text: String,
+    containerColor: Color = Color(0xFFF1F8E9),
+    contentColor: Color = Color(0xFF558B2F)
+) {
     Surface(
-        color = Color(0xFFF1F8E9),
+        color = containerColor,
         shape = RoundedCornerShape(8.dp)
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(icon, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color(0xFF558B2F))
+            Icon(icon, contentDescription = null, modifier = Modifier.size(16.dp), tint = contentColor)
             Spacer(modifier = Modifier.width(8.dp))
-            Text(text = text, fontSize = 13.sp, color = Color(0xFF558B2F))
+            Text(text = text, fontSize = 13.sp, color = contentColor, fontWeight = FontWeight.Bold)
         }
     }
 }

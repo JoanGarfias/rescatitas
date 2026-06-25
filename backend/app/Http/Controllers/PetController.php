@@ -77,7 +77,6 @@ class PetController extends BaseController
     public function getPets(Request $request){
 
         $filters = $request->only(['nombre_mascota', 'direccion', 'raza', 'genero', 'tipo_mascota']);
-
         $pets = $this->petService->getPets($filters);
 
         return response()->json([

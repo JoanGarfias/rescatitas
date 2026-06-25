@@ -21,4 +21,9 @@ class BaseController extends Controller
     {
         return request()->user()?->id;
     }
+
+    protected function currentUserName(): ?string 
+    {
+        return request()->user()?->nombre;
+    }
 }

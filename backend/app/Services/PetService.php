@@ -43,6 +43,7 @@ class PetService
 
     public function getPets(array $filters)
     {
+
         $query = Publicacion::query();
 
         if (isset($filters['nombre_mascota'])) {
@@ -61,7 +62,7 @@ class PetService
             $query->where('genero', '=', $filters['genero']);
         }
 
-        return $query->get();
+        return $query->with('user:nombre')->get();
     }
 
     public function destroy(int $id)
