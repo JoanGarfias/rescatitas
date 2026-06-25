@@ -30,6 +30,7 @@ class RegisterPetPostRequest extends FormRequest
             'fecha_desaparicion' => 'required|date',
             'lugar_desaparicion' => 'nullable|string|max:255',
             'latitud' => 'nullable|numeric|between:-90,90',
+            'telefono' => 'nullable|string|max:20',
             'longitud' => 'nullable|numeric|between:-180,180',
             'tipo_mascota' => 'required|in:perro,gato,conejo,hamster,otro',
             //El estado de la mascota se infiere que es perdido, por eso no lo meto en las reglas
@@ -44,6 +45,8 @@ class RegisterPetPostRequest extends FormRequest
             'nombre_mascota.required' => 'El nombre de la mascota es obligatorio.',
             'nombre_mascota.string' => 'El nombre de la mascota debe ser una cadena de texto.',
             'nombre_mascota.max' => 'El nombre de la mascota no puede exceder los 255 caracteres.',
+            'telefono.string' => 'El teléfono debe ser una cadena de texto.',
+            'telefono.max' => 'El teléfono no puede exceder los 20 caracteres.',
             'descripcion.required' => 'La descripción es obligatoria.',
             'descripcion.string' => 'La descripción debe ser una cadena de texto.',
             'descripcion.max' => 'La descripción no puede exceder los 1600 caracteres.',

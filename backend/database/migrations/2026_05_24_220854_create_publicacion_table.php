@@ -24,6 +24,7 @@ return new class extends Migration
             $table->date('fecha_desaparicion');
             $table->decimal('latitud', 10, 7)->nullable();
             $table->string("direccion", 256)->nullable();
+            $table->string('telefono', 20)->nullable();
             $table->decimal('longitud', 10, 7)->nullable();
             //Pendiente apodos en array (sql)
             $table->enum('estado_mascota', [
