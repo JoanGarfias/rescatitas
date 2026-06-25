@@ -12,6 +12,7 @@ class SessionManager(private val prefs: SharedPreferences) {
 
     companion object {
         const val USER_TOKEN = "user_token"
+        const val FAVORITE_PETS = "favorite_pets"
     }
 
     fun saveAuthToken(token: String) {
@@ -28,5 +29,24 @@ class SessionManager(private val prefs: SharedPreferences) {
         val editor = prefs.edit()
         editor.remove(USER_TOKEN)
         editor.apply()
+    }
+
+    fun toggleFavoritePet(petId: Int) {
+        val favorites = getFavoritePets().toMutableSet()
+        val idString = petId.toString()
+        if (favorites.contains(idString)) {
+            favorites.remove(idString)
+        } else {
+            favorites.add(idString)
+        }
+        prefs.edit().putStringSet(FAVORITE_PETS, favorites).apply()
+    }
+
+    fun getFavoritePets(): Set<String> {
+        return prefs.getStringSet(FAVORITE_PETS, emptySet()) ?: emptySet()
+    }
+
+    fun isPetFavorite(petId: Int): Boolean {
+        return getFavoritePets().contains(petId.toString())
     }
 }

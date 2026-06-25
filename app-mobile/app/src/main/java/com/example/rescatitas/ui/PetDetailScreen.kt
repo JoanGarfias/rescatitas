@@ -1,5 +1,7 @@
 package com.example.rescatitas.ui
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -18,6 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -32,10 +35,38 @@ fun PetDetailScreen(
     onNavigateBack: () -> Unit
 ) {
     val petState by viewModel.petState.collectAsState()
+    val isFavorite by viewModel.isFavorite.collectAsState()
     val scrollState = rememberScrollState()
+    val context = LocalContext.current
 
     LaunchedEffect(petId) {
         viewModel.fetchPetById(petId)
+    }
+
+    fun makeCall(phoneNumber: String) {
+        val intent = Intent(Intent.ACTION_DIAL).apply {
+            data = Uri.parse("tel:$phoneNumber")
+        }
+        context.startActivity(intent)
+    }
+
+    fun sendSms(phoneNumber: String, petName: String) {
+        val intent = Intent(Intent.ACTION_SENDTO).apply {
+            data = Uri.parse("smsto:$phoneNumber")
+            putExtra("sms_body", "Hola, tengo información sobre $petName")
+        }
+        context.startActivity(intent)
+    }
+
+    fun openMap(latitude: String?, longitude: String?, address: String) {
+        val gmmIntentUri = if (latitude != null && longitude != null) {
+            Uri.parse("geo:$latitude,$longitude?q=${Uri.encode(address)}")
+        } else {
+            Uri.parse("geo:0,0?q=${Uri.encode(address)}")
+        }
+        val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
+        mapIntent.setPackage("com.google.android.apps.maps")
+        context.startActivity(mapIntent)
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -84,10 +115,14 @@ fun PetDetailScreen(
                                 }
                                 Spacer(modifier = Modifier.width(8.dp))
                                 IconButton(
-                                    onClick = { /* Favorite */ },
+                                    onClick = { viewModel.toggleFavorite(petId) },
                                     modifier = Modifier.background(Color.White.copy(alpha = 0.5f), CircleShape)
                                 ) {
-                                    Icon(Icons.Default.FavoriteBorder, contentDescription = "Favorito")
+                                    Icon(
+                                        if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                        contentDescription = "Favorito",
+                                        tint = if (isFavorite) Color.Red else Color.Black
+                                    )
                                 }
                             }
                         }
@@ -180,7 +215,7 @@ fun PetDetailScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text("ÚLTIMA UBICACIÓN CONOCIDA", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color.Gray)
-                            TextButton(onClick = { /* Open Map */ }) {
+                            TextButton(onClick = { openMap(pet.latitud, pet.longitud, pet.direccion) }) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text("Ver detalles", color = Color(0xFF4DB6AC))
                                     Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color(0xFF4DB6AC))
@@ -224,8 +259,19 @@ fun PetDetailScreen(
                                 Column(modifier = Modifier.padding(start = 12.dp).weight(1f)) {
                                     Text("Publicado por Usuario", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                                     Text("Dueño de ${pet.nombre_mascota}", fontSize = 12.sp, color = Color.Gray)
+                                    pet.telefono?.let {
+                                        Text(it, fontSize = 11.sp, color = Color.Gray)
+                                    }
                                 }
-                                IconButton(onClick = { /* Message */ }) {
+                                pet.telefono?.let { tel ->
+                                    IconButton(onClick = { makeCall(tel) }) {
+                                        Icon(Icons.Default.Phone, contentDescription = "Llamar", tint = Color(0xFF4DB6AC))
+                                    }
+                                    IconButton(onClick = { sendSms(tel, pet.nombre_mascota) }) {
+                                        Icon(Icons.Default.Sms, contentDescription = "SMS", tint = Color(0xFF4DB6AC))
+                                    }
+                                }
+                                IconButton(onClick = { /* Chat */ }) {
                                     Icon(Icons.Default.ChatBubbleOutline, contentDescription = null, tint = Color(0xFF4DB6AC))
                                 }
                             }
@@ -242,18 +288,40 @@ fun PetDetailScreen(
                         .padding(24.dp),
                     contentAlignment = Alignment.BottomCenter
                 ) {
-                    Button(
-                        onClick = { /* Contact */ },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(55.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4DB6AC)),
-                        shape = RoundedCornerShape(30.dp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Pets, contentDescription = null)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Tengo información / Contactar", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        Button(
+                            onClick = { pet.telefono?.let { makeCall(it) } },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(55.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4DB6AC)),
+                            shape = RoundedCornerShape(30.dp),
+                            enabled = pet.telefono != null
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.Phone, contentDescription = null)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Llamar", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                            }
+                        }
+                        
+                        Button(
+                            onClick = { pet.telefono?.let { sendSms(it, pet.nombre_mascota) } },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(55.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F)),
+                            shape = RoundedCornerShape(30.dp),
+                            enabled = pet.telefono != null
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.Sms, contentDescription = null)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("SMS", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                            }
                         }
                     }
                 }

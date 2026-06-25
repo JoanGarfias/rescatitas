@@ -26,6 +26,7 @@ data class Pet(
     val estado_publicacion: String,
     val id_rescatista: Int? = null,
     val imagen: String? = null,
+    val telefono: String? = null,
     val created_at: String,
     val updated_at: String
 )

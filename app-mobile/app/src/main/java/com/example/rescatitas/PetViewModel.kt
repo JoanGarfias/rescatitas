@@ -3,8 +3,10 @@ package com.example.rescatitas
 import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.viewModelScope
+import com.example.rescatitas.Classes.SessionManager
 import com.example.rescatitas.Models.Pet
 import com.example.rescatitas.Services.PetService
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -24,9 +26,24 @@ sealed class PetState {
 }
 
 // Clase derivada que hereda de BaseViewModel
-class PetViewModel(private val petService: PetService) : BaseViewModel<PetState>(PetState.Idle) {
+class PetViewModel(
+    private val petService: PetService,
+    private val sessionManager: SessionManager? = null
+) : BaseViewModel<PetState>(PetState.Idle) {
     
     val petState: StateFlow<PetState> = _state
+
+    private val _isFavorite = MutableStateFlow(false)
+    val isFavorite: StateFlow<Boolean> = _isFavorite
+
+    fun checkIfFavorite(petId: Int) {
+        _isFavorite.value = sessionManager?.isPetFavorite(petId) ?: false
+    }
+
+    fun toggleFavorite(petId: Int) {
+        sessionManager?.toggleFavoritePet(petId)
+        _isFavorite.value = sessionManager?.isPetFavorite(petId) ?: false
+    }
 
     // Sobrecarga de metodos: cargar sin parametros
     fun fetchRecentPets() {
@@ -50,6 +67,7 @@ class PetViewModel(private val petService: PetService) : BaseViewModel<PetState>
     }
 
     fun fetchPetById(id: Int) {
+        checkIfFavorite(id)
         viewModelScope.launch {
             _state.value = PetState.Loading
             try {
@@ -77,6 +95,7 @@ class PetViewModel(private val petService: PetService) : BaseViewModel<PetState>
         fecha: String,
         genero: String,
         direccion: String,
+        telefono: String,
         imageUri: Uri
     ) {
         viewModelScope.launch {
@@ -94,6 +113,7 @@ class PetViewModel(private val petService: PetService) : BaseViewModel<PetState>
                     fecha.toRequestBody("text/plain".toMediaTypeOrNull()),
                     genero.toRequestBody("text/plain".toMediaTypeOrNull()),
                     direccion.toRequestBody("text/plain".toMediaTypeOrNull()),
+                    telefono.toRequestBody("text/plain".toMediaTypeOrNull()),
                     body
                 )
                 _state.value = PetState.ReportSuccess(response.message)
@@ -122,11 +142,14 @@ class PetViewModel(private val petService: PetService) : BaseViewModel<PetState>
     }
 }
 
-class PetViewModelFactory(private val petService: PetService) : androidx.lifecycle.ViewModelProvider.Factory {
+class PetViewModelFactory(
+    private val petService: PetService,
+    private val sessionManager: SessionManager
+) : androidx.lifecycle.ViewModelProvider.Factory {
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(PetViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return PetViewModel(petService) as T
+            return PetViewModel(petService, sessionManager) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

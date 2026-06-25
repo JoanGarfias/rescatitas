@@ -30,6 +30,7 @@ interface PetService {
         @Part("fecha_desaparicion") fecha: RequestBody,
         @Part("genero") genero: RequestBody,
         @Part("direccion") direccion: RequestBody,
+        @Part("telefono") telefono: RequestBody,
         @Part imagen: MultipartBody.Part
     ): CreateMascotaResponse
 }

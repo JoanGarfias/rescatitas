@@ -22,7 +22,7 @@ class MainActivity : ComponentActivity() {
         val container = DependencyContainer(this)
         
         val authViewModelFactory = AuthViewModelFactory(container.userService, container.sessionManager)
-        val petViewModelFactory = PetViewModelFactory(container.petService)
+        val petViewModelFactory = PetViewModelFactory(container.petService, container.sessionManager)
         val profileViewModelFactory = ProfileViewModelFactory(container.userService, container.sessionManager)
 
         enableEdgeToEdge()

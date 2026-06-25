@@ -44,6 +44,7 @@ fun CreatePetScreen(
     var fecha by remember { mutableStateOf("") }
     var direccion by remember { mutableStateOf("") }
     var descripcion by remember { mutableStateOf("") }
+    var telefono by remember { mutableStateOf("") }
     var tipoMascota by remember { mutableStateOf("perro") }
     var genero by remember { mutableStateOf("macho") }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
@@ -130,6 +131,7 @@ fun CreatePetScreen(
                     FormTextField(label = "Raza", value = raza, onValueChange = { raza = it }, placeholder = "Ej: Golden Retriever")
                     FormTextField(label = "Fecha de extravío", value = fecha, onValueChange = { fecha = it }, placeholder = "aaaa-mm-dd")
                     FormTextField(label = "Dirección / Ubicación", value = direccion, onValueChange = { direccion = it }, placeholder = "Ej: Parque México, Condesa")
+                    FormTextField(label = "Teléfono de contacto", value = telefono, onValueChange = { telefono = it }, placeholder = "Ej: 5512345678")
                     
                     Text("Tipo de mascota", fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.padding(top = 16.dp))
                     Box(modifier = Modifier.fillMaxWidth()) {
@@ -185,7 +187,7 @@ fun CreatePetScreen(
                                 Toast.makeText(context, "Por favor selecciona una imagen", Toast.LENGTH_SHORT).show()
                                 return@Button
                             }
-                            viewModel.createPetReport(context, nombre, tipoMascota, raza, descripcion, fecha, genero, direccion, imageUri!!)
+                            viewModel.createPetReport(context, nombre, tipoMascota, raza, descripcion, fecha, genero, direccion, telefono, imageUri!!)
                         },
                         modifier = Modifier.fillMaxWidth().height(55.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF7043)),
