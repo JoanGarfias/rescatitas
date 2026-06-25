@@ -17,6 +17,7 @@ class Publicacion extends Model
         'nombre_mascota',
         'tipo_mascota',
         'raza',
+        'telefono',
         'descripcion',
         'fecha_desaparicion',
         'longitud',
