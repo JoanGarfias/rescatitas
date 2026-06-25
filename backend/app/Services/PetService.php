@@ -62,7 +62,7 @@ class PetService
             $query->where('genero', '=', $filters['genero']);
         }
 
-        return $query->with('user:nombre')->get();
+        return $query->with('usuario:id,nombre')->get();
     }
 
     public function destroy(int $id)
