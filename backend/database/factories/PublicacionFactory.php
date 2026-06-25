@@ -22,6 +22,7 @@ class PublicacionFactory extends Factory
             'id_usuario' => User::factory(),
             'nombre_mascota' => fake()->firstName(),
             'tipo_mascota' => fake()->randomElement(['perro', 'gato', 'conejo', 'hamster', 'otro']),
+            'telefono' => fake()->phoneNumber(),
             'raza' => fake()->word(),
             'descripcion' => fake()->paragraph(),
             'fecha_desaparicion' => fake()->date(),
