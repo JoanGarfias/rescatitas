@@ -85,18 +85,22 @@ class PetController extends BaseController
     }
 
     public function destroy(int $id){
+
+        $userId = $this->currentUserId();
         $pet = $this->petService->getPetById($id);
         if (!$pet) {
             return response()->json([
                 'message' => 'Mascota no encontrada'
             ], 404);
         }
-        $canDelete = $this->petService->destroy($id);
-        if (!$canDelete) {
+
+        if($pet->id_usuario != $userId){
             return response()->json([
-                'message' => 'Error al eliminar la mascota, esta mascota ya no está registrada'
-            ], 500);
+                'message' => 'No tienes permisos para eliminar esta mascota'
+            ], 403);
         }
+
+        $this->petService->destroy($id);
 
         return response()->json([
             'message' => 'Mascota eliminada exitosamente'
