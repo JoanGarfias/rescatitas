@@ -38,6 +38,7 @@ class DependencyContainer(context: Context) {
     private val authInterceptor = Interceptor { chain ->
         val token = sessionManager.fetchAuthToken()
         val request = chain.request().newBuilder()
+            .addHeader("Accept", "application/json")
         if (token != null) {
             request.addHeader("Authorization", "Bearer $token")
         }

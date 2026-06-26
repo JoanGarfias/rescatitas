@@ -24,14 +24,13 @@ object RetrofitClient {
     private fun getClient(token: String? = null): Retrofit {
         val httpClient = OkHttpClient.Builder() // Instanciación de librería externa
         
-        // Estructura IF: Si hay un token, configuramos el interceptor de seguridad
-        if (token != null) {
-            httpClient.addInterceptor { chain ->
-                val request = chain.request().newBuilder()
-                    .addHeader("Authorization", "Bearer $token")
-                    .build()
-                chain.proceed(request)
+        httpClient.addInterceptor { chain ->
+            val request = chain.request().newBuilder()
+                .addHeader("Accept", "application/json")
+            if (token != null) {
+                request.addHeader("Authorization", "Bearer $token")
             }
+            chain.proceed(request.build())
         }
 
         return Retrofit.Builder()
