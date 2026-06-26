@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -27,14 +28,22 @@ fun ProfileScreen(
     onNavigateToAlerts: () -> Unit
 ) {
     val profileState by viewModel.profileState.collectAsState()
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         viewModel.fetchProfile()
     }
 
     LaunchedEffect(profileState) {
-        if (profileState is ProfileState.LogoutSuccess) {
-            onLogout()
+        when (profileState) {
+            is ProfileState.LogoutSuccess -> {
+                android.widget.Toast.makeText(context, "Sesión cerrada correctamente", android.widget.Toast.LENGTH_SHORT).show()
+                onLogout()
+            }
+            is ProfileState.Error -> {
+                android.widget.Toast.makeText(context, (profileState as ProfileState.Error).message, android.widget.Toast.LENGTH_SHORT).show()
+            }
+            else -> {}
         }
     }
 

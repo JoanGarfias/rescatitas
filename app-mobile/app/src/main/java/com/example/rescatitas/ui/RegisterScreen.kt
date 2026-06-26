@@ -26,7 +26,11 @@ import com.example.rescatitas.AuthState
 import com.example.rescatitas.AuthViewModel
 import com.example.rescatitas.Models.RegisterUserRequest
 import com.example.rescatitas.R
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(
     viewModel: AuthViewModel,
@@ -46,6 +50,9 @@ fun RegisterScreen(
     var municipio by remember { mutableStateOf("") }
     var estado by remember { mutableStateOf("Selecciona un estado") }
     var expanded by remember { mutableStateOf(false) }
+    var showDatePicker by remember { mutableStateOf(false) }
+    
+    val datePickerState = rememberDatePickerState()
     
     val estadosMexico = listOf(
         "Aguascalientes", "Baja California", "Baja California Sur", "Campeche", "Chiapas",
@@ -133,7 +140,24 @@ fun RegisterScreen(
                     SectionHeader(icon = Icons.Default.Person, title = "Datos Personales")
                     
                     RegisterField(label = "Nombre", value = nombre, onValueChange = { nombre = it }, placeholder = "Ingresa tu nombre")
-                    RegisterField(label = "Fecha de Nacimiento", value = fechaNacimiento, onValueChange = { fechaNacimiento = it }, placeholder = "Ej: 1995-05-15")
+                    
+                    // Selector de Fecha de Nacimiento
+                    Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                        Text("Fecha de Nacimiento", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        OutlinedButton(
+                            onClick = { showDatePicker = true },
+                            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(containerColor = Color(0xFFF1F5F9), contentColor = Color.Black),
+                            border = null
+                        ) {
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                Text(if (fechaNacimiento.isEmpty()) "Seleccionar fecha" else fechaNacimiento, fontSize = 14.sp)
+                                Icon(Icons.Default.CalendarToday, contentDescription = null, modifier = Modifier.size(20.dp))
+                            }
+                        }
+                    }
+
                     RegisterField(label = "Apellido Paterno", value = apellidoPaterno, onValueChange = { apellidoPaterno = it }, placeholder = "Primer apellido")
                     RegisterField(label = "Apellido Materno", value = apellidoMaterno, onValueChange = { apellidoMaterno = it }, placeholder = "Segundo apellido")
                     RegisterField(label = "Teléfono", value = telefono, onValueChange = { telefono = it }, placeholder = "+52 10 dígitos")
@@ -244,6 +268,26 @@ fun RegisterScreen(
                     }
                 }
             }
+        }
+    }
+
+    if (showDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        val date = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate()
+                        fechaNacimiento = date.format(DateTimeFormatter.ISO_LOCAL_DATE)
+                    }
+                    showDatePicker = false
+                }) { Text("Confirmar") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) { Text("Cancelar") }
+            }
+        ) {
+            DatePicker(state = datePickerState)
         }
     }
 }
