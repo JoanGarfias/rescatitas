@@ -106,4 +106,18 @@ class PetController extends BaseController
         ]);
     }
 
+    public function getMyPets(){
+        $userId = $this->currentUserId();
+        try{
+            $pets = $this->petService->getMyPets($userId);
+            return response()->json([
+                'pets' => $pets
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => 'Error al obtener las mascotas' . $e->getMessage()
+            ], 500);
+        }
+    }
+
 }

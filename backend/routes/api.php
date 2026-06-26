@@ -24,6 +24,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/mascotas', [PetController::class, 'store']);
     Route::delete('/mascotas/{id}', [PetController::class, 'destroy']);
 
+    Route::get('/mis-mascotas', [PetController::class, 'getMyPets']);
+
     // Comentarios
     Route::get('/publicaciones/{id_publicacion}/comentarios', [CommentController::class, 'getComments']);
     Route::post('/publicaciones/comentarios', [CommentController::class, 'create']);

@@ -41,6 +41,11 @@ class PetService
         return Publicacion::find($id);
     }
 
+    public function getMyPets(int $userId)
+    {
+        return Publicacion::where('id_usuario', $userId)->get();
+    }
+
     public function getPets(array $filters)
     {
 
