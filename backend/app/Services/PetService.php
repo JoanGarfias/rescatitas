@@ -65,10 +65,10 @@ class PetService
         return $query->with('usuario:id,nombre')->get();
     }
 
-    public function destroy(int $id)
+    public function destroy(int $id, int $userId) : bool
     {
         $pet = Publicacion::find($id);
-        if ($pet) {
+        if ($pet && $pet->id_usuario == $userId) {
             $pet->delete();
             return true;
         }
