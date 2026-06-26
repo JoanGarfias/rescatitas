@@ -45,6 +45,17 @@ fun BottomNavigationBar(
             )
         )
         NavigationBarItem(
+            icon = { Icon(Icons.Default.Notifications, contentDescription = "Mis Reportes") },
+            label = { Text("Reportes") },
+            selected = currentRoute == "mis_mascotas",
+            onClick = onNavigateToAlerts,
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = Color(0xFFD32F2F),
+                selectedTextColor = Color(0xFFD32F2F),
+                indicatorColor = Color(0xFFFFEBEE)
+            )
+        )
+        NavigationBarItem(
             icon = { Icon(Icons.Default.Person, contentDescription = "Perfil") },
             label = { Text("Perfil") },
             selected = currentRoute == "perfil",

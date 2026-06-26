@@ -39,6 +39,12 @@ interface PetService {
     suspend fun search(): GetMascotaResponse
 
     /**
+     * getMyPets: Obtiene las mascotas reportadas por el usuario autenticado.
+     */
+    @GET("mis-mascotas")
+    suspend fun getMyPets(): GetMascotaResponse
+
+    /**
      * createPet: Envía un nuevo reporte de mascota al servidor.
      * @Multipart: Permite el envío de archivos (fotos) junto con campos de texto.
      * @Part: Especifica cada fragmento de la petición multipart.

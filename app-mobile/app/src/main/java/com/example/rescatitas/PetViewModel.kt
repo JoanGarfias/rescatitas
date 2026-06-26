@@ -108,6 +108,21 @@ class PetViewModel(
         }
     }
 
+    fun fetchMyPets() {
+        viewModelScope.launch {
+            _state.value = PetState.Loading
+            try {
+                val response = petService.getMyPets()
+                _state.value = PetState.Success(response.pets ?: emptyList())
+            } catch (e: retrofit2.HttpException) {
+                val errorBody = e.response()?.errorBody()?.string()
+                _state.value = PetState.Error("Error ${e.code()}: ${errorBody ?: e.message()}")
+            } catch (e: Exception) {
+                _state.value = PetState.Error(e.message ?: "Error al cargar tus mascotas")
+            }
+        }
+    }
+
     fun fetchPetById(id: Int) {
         checkIfFavorite(id)
         viewModelScope.launch {

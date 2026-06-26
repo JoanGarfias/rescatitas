@@ -111,9 +111,9 @@ class MainActivity : ComponentActivity() {
                             },
                             onNavigateToHelp = { },
                             onNavigateToMap = { navController.navigate("mapa") },
-                            onNavigateToAlerts = { },
+                            onNavigateToAlerts = { navController.navigate("mis_mascotas") },
                             onNavigateToProfile = { navController.navigate("perfil") },
-                            onNavigateToPetDetail = { petId ->
+                            onNavigateToPetDetail = { petId: Int ->
                                 petViewModel.resetState()
                                 navController.navigate("pet_detail/$petId")
                             },
@@ -123,14 +123,32 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
+                    // Pantalla de mis reportes (Mascotas registradas por el usuario)
+                    composable("mis_mascotas") {
+                        MyPetsScreen(
+                            viewModel = petViewModel,
+                            onNavigateToInicio = { navController.navigate("home") },
+                            onNavigateToMap = { navController.navigate("mapa") },
+                            onNavigateToProfile = { navController.navigate("perfil") },
+                            onNavigateToPetDetail = { petId: Int ->
+                                petViewModel.resetState()
+                                navController.navigate("pet_detail/$petId")
+                            },
+                            onNavigateToCreatePet = {
+                                petViewModel.resetState()
+                                navController.navigate("create_pet")
+                            }
+                        )
+                    }
+
                     // Pantalla de mapa de mascotas
                     composable("mapa") {
                         MapScreen(
                             viewModel = petViewModel,
                             onNavigateToInicio = { navController.navigate("home") },
-                            onNavigateToAlerts = { },
+                            onNavigateToAlerts = { navController.navigate("mis_mascotas") },
                             onNavigateToProfile = { navController.navigate("perfil") },
-                            onNavigateToPetDetail = { petId ->
+                            onNavigateToPetDetail = { petId: Int ->
                                 petViewModel.resetState()
                                 navController.navigate("pet_detail/$petId")
                             }
@@ -180,7 +198,7 @@ class MainActivity : ComponentActivity() {
                             },
                             onNavigateToHome = { navController.navigate("home") },
                             onNavigateToMap = { navController.navigate("mapa") },
-                            onNavigateToAlerts = { }
+                            onNavigateToAlerts = { navController.navigate("mis_mascotas") }
                         )
                     }
                 }

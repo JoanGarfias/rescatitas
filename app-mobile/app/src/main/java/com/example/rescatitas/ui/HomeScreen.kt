@@ -266,7 +266,7 @@ fun PetCard(pet: Pet, onClick: () -> Unit) {
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Text(
-                        text = "Urgente",
+                        text = "Reciente",
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold
