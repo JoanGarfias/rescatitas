@@ -1,5 +1,13 @@
 package com.example.rescatitas.Models
 
+/**
+ * AuthModels: Modelos de datos específicos para el sistema de autenticación y perfiles de usuario.
+ */
+
+/**
+ * User: Representa la entidad completa de un usuario en el sistema.
+ * Contiene datos personales y de cuenta.
+ */
 data class User(
     val id: Int? = null,
     val email: String? = null,
@@ -21,6 +29,9 @@ data class User(
     val rol: String? = "usuario",
 )
 
+/**
+ * RegisterUserRequest: Datos necesarios para crear un nuevo usuario.
+ */
 data class RegisterUserRequest(
     val nombre: String,
     val apellido_paterno: String,
@@ -37,22 +48,34 @@ data class RegisterUserRequest(
     val device_name: String,
 )
 
+/**
+ * LoginRequest: Credenciales enviadas para iniciar sesión.
+ */
 data class LoginRequest(
     val email: String,
     val password: String,
     val device_name: String
 )
 
+/**
+ * RegisterResponse: Datos devueltos tras un registro exitoso.
+ */
 data class RegisterResponse(
     val user: User? = null,
     val token: String? = null
 )
 
+/**
+ * LoginResponse: Datos devueltos tras un inicio de sesión exitoso.
+ */
 data class LoginResponse(
     val user: User,
     val token: String
 )
 
+/**
+ * RegisterErrorResponse: Modelo para manejar errores de validación del servidor (ej: email duplicado).
+ */
 data class RegisterErrorResponse(
     val message: String,
     val errors: Map<String, List<String>>

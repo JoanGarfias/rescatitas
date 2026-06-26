@@ -36,6 +36,9 @@ class PetViewModel(
     private val _isFavorite = MutableStateFlow(false)
     val isFavorite: StateFlow<Boolean> = _isFavorite
 
+    private val _favoritePets = MutableStateFlow<List<Pet>>(emptyList())
+    val favoritePets: StateFlow<List<Pet>> = _favoritePets
+
     fun checkIfFavorite(petId: Int) {
         _isFavorite.value = sessionManager?.isPetFavorite(petId) ?: false
     }
@@ -43,6 +46,40 @@ class PetViewModel(
     fun toggleFavorite(petId: Int) {
         sessionManager?.toggleFavoritePet(petId)
         _isFavorite.value = sessionManager?.isPetFavorite(petId) ?: false
+        // Si estamos en la pantalla de favoritos, podríamos querer refrescar la lista
+        if (sessionManager != null) {
+            val currentFavorites = _favoritePets.value.toMutableList()
+            if (sessionManager.isPetFavorite(petId)) {
+                // Si ahora es favorito pero no está en la lista (raro si acabamos de toggle), 
+                // tendríamos que volver a cargar o esperar a que el usuario regrese a la pantalla
+            } else {
+                currentFavorites.removeAll { it.id_publicacion == petId }
+                _favoritePets.value = currentFavorites
+            }
+        }
+    }
+
+    fun fetchFavoritePets() {
+        val favoriteIds = sessionManager?.getFavoritePets() ?: emptySet()
+        if (favoriteIds.isEmpty()) {
+            _favoritePets.value = emptyList()
+            return
+        }
+
+        viewModelScope.launch {
+            _state.value = PetState.Loading
+            try {
+                // Por simplicidad, cargamos todas y filtramos. 
+                // En una app real, el API debería soportar filtrar por lista de IDs.
+                val response = petService.getAllPets()
+                val allPets = response.pets ?: emptyList()
+                val filtered = allPets.filter { it.id_publicacion.toString() in favoriteIds }
+                _favoritePets.value = filtered
+                _state.value = PetState.Idle // Evitamos Success global para no interferir con Home
+            } catch (e: Exception) {
+                _state.value = PetState.Error(e.message ?: "Error al cargar favoritos")
+            }
+        }
     }
 
     // Sobrecarga de metodos: cargar sin parametros
@@ -96,7 +133,9 @@ class PetViewModel(
         genero: String,
         direccion: String,
         telefono: String,
-        imageUri: Uri
+        imageUri: Uri,
+        latitud: Double? = null,
+        longitud: Double? = null
     ) {
         viewModelScope.launch {
             _state.value = PetState.Loading
@@ -114,7 +153,9 @@ class PetViewModel(
                     genero.toRequestBody("text/plain".toMediaTypeOrNull()),
                     direccion.toRequestBody("text/plain".toMediaTypeOrNull()),
                     telefono.toRequestBody("text/plain".toMediaTypeOrNull()),
-                    body
+                    body,
+                    latitud?.toString()?.toRequestBody("text/plain".toMediaTypeOrNull()),
+                    longitud?.toString()?.toRequestBody("text/plain".toMediaTypeOrNull())
                 )
                 _state.value = PetState.ReportSuccess(response.message)
             } catch (e: retrofit2.HttpException) {

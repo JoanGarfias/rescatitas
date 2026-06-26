@@ -36,9 +36,11 @@ fun HomeScreen(
     onNavigateToMap: () -> Unit,
     onNavigateToAlerts: () -> Unit,
     onNavigateToProfile: () -> Unit,
-    onNavigateToPetDetail: (Int) -> Unit
+    onNavigateToPetDetail: (Int) -> Unit,
+    onNavigateToFavorites: () -> Unit
 ) {
     val petState by viewModel.petState.collectAsState()
+    var showHelpModal by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.fetchRecentPets()
@@ -61,16 +63,27 @@ fun HomeScreen(
                 .padding(paddingValues)
                 .padding(horizontal = 16.dp)
         ) {
-            Text(
-                text = "Rescatitas",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFFD32F2F),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp),
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-            )
+            Box(modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)) {
+                Text(
+                    text = "Rescatitas",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFD32F2F),
+                    modifier = Modifier.align(Alignment.Center),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+                
+                IconButton(
+                    onClick = onNavigateToFavorites,
+                    modifier = Modifier.align(Alignment.CenterEnd)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Favorite,
+                        contentDescription = "Favoritos",
+                        tint = Color(0xFFD32F2F)
+                    )
+                }
+            }
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -88,7 +101,54 @@ fun HomeScreen(
                     icon = Icons.Default.Pets,
                     containerColor = Color(0xFF4DB6AC),
                     modifier = Modifier.weight(1f),
-                    onClick = onNavigateToHelp
+                    onClick = { showHelpModal = true }
+                )
+            }
+
+            if (showHelpModal) {
+                AlertDialog(
+                    onDismissRequest = { showHelpModal = false },
+                    title = { 
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.VolunteerActivism, contentDescription = null, tint = Color(0xFF4DB6AC))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("¿Cómo puedo ayudar?", fontWeight = FontWeight.Bold)
+                        }
+                    },
+                    text = {
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            HelpStep(
+                                icon = Icons.Default.Search,
+                                title = "Explora los reportes",
+                                description = "Revisa la lista de mascotas perdidas recientes o usa el mapa para ver casos cerca de ti."
+                            )
+                            HelpStep(
+                                icon = Icons.Default.Visibility,
+                                title = "Si viste a una mascota",
+                                description = "Entra al detalle de la mascota y usa los botones de contacto para avisar al dueño inmediatamente."
+                            )
+                            HelpStep(
+                                icon = Icons.Default.Home,
+                                title = "Si tienes a la mascota",
+                                description = "Mantenla en un lugar seguro y contacta al dueño. Si no hay reporte, puedes estar atento a nuevas publicaciones."
+                            )
+                            HelpStep(
+                                icon = Icons.Default.Share,
+                                title = "Comparte",
+                                description = "Ayuda difundiendo las publicaciones en tus redes sociales para llegar a más personas."
+                            )
+                        }
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = { showHelpModal = false },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4DB6AC))
+                        ) {
+                            Text("Entendido")
+                        }
+                    },
+                    shape = RoundedCornerShape(16.dp),
+                    containerColor = Color.White
                 )
             }
 
@@ -132,6 +192,23 @@ fun HomeScreen(
                 }
                 else -> {}
             }
+        }
+    }
+}
+
+@Composable
+fun HelpStep(icon: ImageVector, title: String, description: String) {
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = Color(0xFF4DB6AC),
+            modifier = Modifier.size(24.dp)
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Column {
+            Text(text = title, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color(0xFF263238))
+            Text(text = description, fontSize = 13.sp, color = Color(0xFF455A64))
         }
     }
 }
@@ -249,49 +326,5 @@ fun PetCard(pet: Pet, onClick: () -> Unit) {
                 }
             }
         }
-    }
-}
-
-@Composable
-fun BottomNavigationBar(
-    currentRoute: String,
-    onNavigateToInicio: () -> Unit,
-    onNavigateToMap: () -> Unit,
-    onNavigateToAlerts: () -> Unit,
-    onNavigateToProfile: () -> Unit
-) {
-    NavigationBar(
-        containerColor = Color.White,
-        tonalElevation = 8.dp
-    ) {
-        NavigationBarItem(
-            icon = { Icon(Icons.Default.Home, contentDescription = "Inicio") },
-            label = { Text("Inicio") },
-            selected = currentRoute == "inicio",
-            onClick = onNavigateToInicio,
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = Color(0xFFD32F2F),
-                selectedTextColor = Color(0xFFD32F2F),
-                indicatorColor = Color(0xFFFFEBEE)
-            )
-        )
-        NavigationBarItem(
-            icon = { Icon(Icons.Default.Map, contentDescription = "Mapa") },
-            label = { Text("Mapa") },
-            selected = currentRoute == "mapa",
-            onClick = onNavigateToMap
-        )
-        NavigationBarItem(
-            icon = { Icon(Icons.Default.Notifications, contentDescription = "Alertas") },
-            label = { Text("Alertas") },
-            selected = currentRoute == "alertas",
-            onClick = onNavigateToAlerts
-        )
-        NavigationBarItem(
-            icon = { Icon(Icons.Default.Person, contentDescription = "Perfil") },
-            label = { Text("Perfil") },
-            selected = currentRoute == "perfil",
-            onClick = onNavigateToProfile
-        )
     }
 }

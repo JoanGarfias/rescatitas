@@ -27,6 +27,12 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.rescatitas.PetState
 import com.example.rescatitas.PetViewModel
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.rememberMarkerState
+import com.google.maps.android.compose.rememberCameraPositionState
 
 @Composable
 fun PetDetailScreen(
@@ -44,29 +50,43 @@ fun PetDetailScreen(
     }
 
     fun makeCall(phoneNumber: String) {
-        val intent = Intent(Intent.ACTION_DIAL).apply {
-            data = Uri.parse("tel:$phoneNumber")
+        try {
+            val intent = Intent(Intent.ACTION_DIAL).apply {
+                data = Uri.parse("tel:$phoneNumber")
+            }
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            android.widget.Toast.makeText(context, "No se pudo abrir el marcador", android.widget.Toast.LENGTH_SHORT).show()
         }
-        context.startActivity(intent)
     }
 
     fun sendSms(phoneNumber: String, petName: String) {
-        val intent = Intent(Intent.ACTION_SENDTO).apply {
-            data = Uri.parse("smsto:$phoneNumber")
-            putExtra("sms_body", "Hola, tengo información sobre $petName")
+        try {
+            val intent = Intent(Intent.ACTION_SENDTO).apply {
+                data = Uri.parse("smsto:$phoneNumber")
+                putExtra("sms_body", "Hola, tengo información sobre $petName")
+            }
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            android.widget.Toast.makeText(context, "No se pudo abrir la app de mensajes", android.widget.Toast.LENGTH_SHORT).show()
         }
-        context.startActivity(intent)
     }
 
     fun openMap(latitude: String?, longitude: String?, address: String) {
-        val gmmIntentUri = if (latitude != null && longitude != null) {
-            Uri.parse("geo:$latitude,$longitude?q=${Uri.encode(address)}")
-        } else {
-            Uri.parse("geo:0,0?q=${Uri.encode(address)}")
+        try {
+            val gmmIntentUri = if (latitude != null && longitude != null) {
+                Uri.parse("geo:$latitude,$longitude?q=${Uri.encode(address)}")
+            } else {
+                Uri.parse("geo:0,0?q=${Uri.encode(address)}")
+            }
+            val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
+            mapIntent.setPackage("com.google.android.apps.maps")
+            context.startActivity(mapIntent)
+        } catch (e: Exception) {
+            // Fallback si Google Maps no está instalado
+            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/maps/search/?api=1&query=${Uri.encode(address)}"))
+            context.startActivity(browserIntent)
         }
-        val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
-        mapIntent.setPackage("com.google.android.apps.maps")
-        context.startActivity(mapIntent)
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -213,16 +233,45 @@ fun PetDetailScreen(
                             }
                         }
 
-                        // Map Placeholder
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(180.dp)
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(Color(0xFFE0F2F1)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(Icons.Default.LocationOn, contentDescription = null, tint = Color(0xFFD32F2F), modifier = Modifier.size(40.dp))
+                        // Map View
+                        val lat = pet.latitud?.toDoubleOrNull()
+                        val lng = pet.longitud?.toDoubleOrNull()
+                        
+                        if (lat != null && lng != null) {
+                            val petLocation = LatLng(lat, lng)
+                            val cameraPositionState = rememberCameraPositionState {
+                                position = CameraPosition.fromLatLngZoom(petLocation, 15f)
+                            }
+                            
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(200.dp)
+                                    .clip(RoundedCornerShape(16.dp))
+                            ) {
+                                GoogleMap(
+                                    modifier = Modifier.fillMaxSize(),
+                                    cameraPositionState = cameraPositionState
+                                ) {
+                                    Marker(
+                                        state = rememberMarkerState(position = petLocation),
+                                        title = pet.nombre_mascota
+                                    )
+                                }
+                            }
+                        } else {
+                            // Map Placeholder if no coordinates
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(180.dp)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(Color(0xFFE0F2F1)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Default.LocationOn, contentDescription = null, tint = Color(0xFFD32F2F), modifier = Modifier.size(40.dp))
+                                Text("Ubicación no disponible", modifier = Modifier.padding(top = 60.dp), color = Color.Gray)
+                            }
                         }
                         
                         Row(modifier = Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -247,7 +296,7 @@ fun PetDetailScreen(
                                     Icon(Icons.Default.Person, contentDescription = null, modifier = Modifier.padding(8.dp))
                                 }
                                 Column(modifier = Modifier.padding(start = 12.dp).weight(1f)) {
-                                    Text("Publicado por ", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                    Text("Publicado por " + (pet.usuario?.nombre ?: "Usuario"), fontWeight = FontWeight.Bold, fontSize = 14.sp)
                                     Text("Dueño de ${pet.nombre_mascota}", fontSize = 12.sp, color = Color.Gray)
                                     pet.telefono?.let {
                                         Text(it, fontSize = 11.sp, color = Color.Gray)
@@ -261,58 +310,10 @@ fun PetDetailScreen(
                                         Icon(Icons.Default.Sms, contentDescription = "SMS", tint = Color(0xFF4DB6AC))
                                     }
                                 }
-                                IconButton(onClick = { /* Chat */ }) {
-                                    Icon(Icons.Default.ChatBubbleOutline, contentDescription = null, tint = Color(0xFF4DB6AC))
-                                }
                             }
                         }
                         
                         Spacer(modifier = Modifier.height(100.dp)) // Padding for bottom button
-                    }
-                }
-
-                // Fixed Bottom Button
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(24.dp),
-                    contentAlignment = Alignment.BottomCenter
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Button(
-                            onClick = { pet.telefono?.let { makeCall(it) } },
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(55.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4DB6AC)),
-                            shape = RoundedCornerShape(30.dp),
-                            enabled = pet.telefono != null
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.Phone, contentDescription = null)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Llamar", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                            }
-                        }
-                        
-                        Button(
-                            onClick = { pet.telefono?.let { sendSms(it, pet.nombre_mascota) } },
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(55.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F)),
-                            shape = RoundedCornerShape(30.dp),
-                            enabled = pet.telefono != null
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.Sms, contentDescription = null)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("SMS", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                            }
-                        }
                     }
                 }
             }

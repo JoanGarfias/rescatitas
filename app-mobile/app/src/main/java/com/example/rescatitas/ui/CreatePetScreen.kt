@@ -29,6 +29,16 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.rescatitas.PetState
 import com.example.rescatitas.PetViewModel
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.*
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,12 +47,16 @@ fun CreatePetScreen(
     onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
+    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
     
     var nombre by remember { mutableStateOf("") }
     var raza by remember { mutableStateOf("") }
     var fecha by remember { mutableStateOf("") }
     var direccion by remember { mutableStateOf("") }
+    var latitud by remember { mutableStateOf<Double?>(null) }
+    var longitud by remember { mutableStateOf<Double?>(null) }
     var descripcion by remember { mutableStateOf("") }
     var telefono by remember { mutableStateOf("") }
     var tipoMascota by remember { mutableStateOf("perro") }
@@ -51,8 +65,12 @@ fun CreatePetScreen(
     
     var tipoExpanded by remember { mutableStateOf(false) }
     var generoExpanded by remember { mutableStateOf(false) }
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showLocationSelector by remember { mutableStateOf(false) }
 
     val petState by viewModel.petState.collectAsState()
+
+    val datePickerState = rememberDatePickerState()
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -129,8 +147,41 @@ fun CreatePetScreen(
 
                     FormTextField(label = "Nombre de la mascota", value = nombre, onValueChange = { nombre = it }, placeholder = "Ej: Firulais")
                     FormTextField(label = "Raza", value = raza, onValueChange = { raza = it }, placeholder = "Ej: Golden Retriever")
-                    FormTextField(label = "Fecha de extravío", value = fecha, onValueChange = { fecha = it }, placeholder = "aaaa-mm-dd")
-                    FormTextField(label = "Dirección / Ubicación", value = direccion, onValueChange = { direccion = it }, placeholder = "Ej: Parque México, Condesa")
+                    
+                    // Fecha Selector
+                    Column(modifier = Modifier.padding(top = 16.dp)) {
+                        Text("Fecha de extravío", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        OutlinedButton(
+                            onClick = { showDatePicker = true },
+                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(containerColor = Color(0xFFF1F5F9), contentColor = Color.Black),
+                            border = null
+                        ) {
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                Text(if (fecha.isEmpty()) "Seleccionar fecha" else fecha, fontSize = 14.sp)
+                                Icon(Icons.Default.CalendarToday, contentDescription = null, modifier = Modifier.size(20.dp))
+                            }
+                        }
+                    }
+
+                    // Dirección / Ubicación Selector
+                    Column(modifier = Modifier.padding(top = 16.dp)) {
+                        Text("Dirección / Ubicación", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        FormTextField(label = "", value = direccion, onValueChange = { direccion = it }, placeholder = "Ej: Parque México, Condesa")
+                        
+                        Button(
+                            onClick = { showLocationSelector = true },
+                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE3F2FD), contentColor = Color(0xFF1976D2)),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Icon(Icons.Default.LocationOn, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(if (latitud != null) "Ubicación seleccionada ✓" else "Seleccionar en mapa / GPS", fontSize = 14.sp)
+                        }
+                    }
+
                     FormTextField(label = "Teléfono de contacto", value = telefono, onValueChange = { telefono = it }, placeholder = "Ej: 5512345678")
                     
                     Text("Tipo de mascota", fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.padding(top = 16.dp))
@@ -183,11 +234,34 @@ fun CreatePetScreen(
 
                     Button(
                         onClick = {
-                            if (imageUri == null) {
-                                Toast.makeText(context, "Por favor selecciona una imagen", Toast.LENGTH_SHORT).show()
+                            // Validaciones básicas antes de enviar
+                            if (nombre.isBlank() || raza.isBlank() || direccion.isBlank() || telefono.isBlank()) {
+                                Toast.makeText(context, "Por favor completa todos los campos obligatorios", Toast.LENGTH_SHORT).show()
                                 return@Button
                             }
-                            viewModel.createPetReport(context, nombre, tipoMascota, raza, descripcion, fecha, genero, direccion, telefono, imageUri!!)
+                            if (imageUri == null) {
+                                Toast.makeText(context, "Por favor selecciona una imagen de la mascota", Toast.LENGTH_SHORT).show()
+                                return@Button
+                            }
+                            if (telefono.length < 10) {
+                                Toast.makeText(context, "El teléfono debe tener al menos 10 dígitos", Toast.LENGTH_SHORT).show()
+                                return@Button
+                            }
+
+                            viewModel.createPetReport(
+                                context, 
+                                nombre, 
+                                tipoMascota, 
+                                raza, 
+                                descripcion, 
+                                fecha, 
+                                genero, 
+                                direccion, 
+                                telefono, 
+                                imageUri!!,
+                                latitud,
+                                longitud
+                            )
                         },
                         modifier = Modifier.fillMaxWidth().height(55.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF7043)),
@@ -238,6 +312,96 @@ fun CreatePetScreen(
                 }
             }
         }
+    }
+
+    if (showDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        val date = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate()
+                        fecha = date.format(DateTimeFormatter.ISO_LOCAL_DATE)
+                    }
+                    showDatePicker = false
+                }) { Text("Confirmar") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) { Text("Cancelar") }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    if (showLocationSelector) {
+        val cameraPositionState = rememberCameraPositionState {
+            position = CameraPosition.fromLatLngZoom(LatLng(19.4326, -99.1332), 12f)
+        }
+        
+        AlertDialog(
+            onDismissRequest = { showLocationSelector = false },
+            confirmButton = {
+                TextButton(onClick = { showLocationSelector = false }) { Text("Cerrar") }
+            },
+            title = { Text("Seleccionar Ubicación") },
+            text = {
+                Column(modifier = Modifier.fillMaxWidth().height(400.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = {
+                                scope.launch {
+                                    try {
+                                        val location = fusedLocationClient.lastLocation.await()
+                                        location?.let {
+                                            val currentLatLng = LatLng(it.latitude, it.longitude)
+                                            latitud = it.latitude
+                                            longitud = it.longitude
+                                            cameraPositionState.position = CameraPosition.fromLatLngZoom(currentLatLng, 15f)
+                                        }
+                                    } catch (e: Exception) {
+                                        Toast.makeText(context, "Error al obtener ubicación", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Icon(Icons.Default.MyLocation, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Mi ubicación", fontSize = 12.sp)
+                        }
+                    }
+                    
+                    Box(modifier = Modifier.weight(1f).clip(RoundedCornerShape(8.dp))) {
+                        GoogleMap(
+                            modifier = Modifier.fillMaxSize(),
+                            cameraPositionState = cameraPositionState,
+                            onMapClick = { latLng ->
+                                latitud = latLng.latitude
+                                longitud = latLng.longitude
+                            }
+                        ) {
+                            latitud?.let { lat ->
+                                longitud?.let { lng ->
+                                    Marker(state = MarkerState(position = LatLng(lat, lng)))
+                                }
+                            }
+                        }
+                    }
+                    
+                    Text(
+                        "Toca el mapa para marcar el punto exacto",
+                        fontSize = 11.sp,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+            }
+        )
     }
 }
 
