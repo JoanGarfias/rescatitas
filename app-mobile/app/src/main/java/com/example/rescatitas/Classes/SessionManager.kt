@@ -12,6 +12,7 @@ class SessionManager(private val prefs: SharedPreferences) {
 
     companion object {
         const val USER_TOKEN = "user_token"
+        const val USER_ID = "user_id"
         const val FAVORITE_PETS = "favorite_pets"
     }
 
@@ -21,13 +22,22 @@ class SessionManager(private val prefs: SharedPreferences) {
         editor.apply()
     }
 
+    fun saveUserId(id: Int) {
+        prefs.edit().putInt(USER_ID, id).apply()
+    }
+
     fun fetchAuthToken(): String? {
         return prefs.getString(USER_TOKEN, null)
+    }
+
+    fun fetchUserId(): Int {
+        return prefs.getInt(USER_ID, -1)
     }
 
     fun clearAuthToken() {
         val editor = prefs.edit()
         editor.remove(USER_TOKEN)
+        editor.remove(USER_ID)
         editor.apply()
     }
 

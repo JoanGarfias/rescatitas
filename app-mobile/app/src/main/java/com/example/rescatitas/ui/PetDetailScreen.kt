@@ -42,11 +42,19 @@ fun PetDetailScreen(
 ) {
     val petState by viewModel.petState.collectAsState()
     val isFavorite by viewModel.isFavorite.collectAsState()
+    var showDeleteDialog by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
     val context = LocalContext.current
 
     LaunchedEffect(petId) {
         viewModel.fetchPetById(petId)
+    }
+
+    LaunchedEffect(petState) {
+        if (petState is PetState.DeleteSuccess) {
+            android.widget.Toast.makeText(context, "Publicación eliminada", android.widget.Toast.LENGTH_SHORT).show()
+            onNavigateBack()
+        }
     }
 
     fun makeCall(phoneNumber: String) {
@@ -127,6 +135,16 @@ fun PetDetailScreen(
                             }
                             
                             Row {
+                                if (pet.id_usuario == viewModel.getCurrentUserId()) {
+                                    IconButton(
+                                        onClick = { showDeleteDialog = true },
+                                        modifier = Modifier.background(Color.White.copy(alpha = 0.5f), CircleShape)
+                                    ) {
+                                        Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = Color.Red)
+                                    }
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                }
+
                                 IconButton(
                                     onClick = { viewModel.toggleFavorite(petId) },
                                     modifier = Modifier.background(Color.White.copy(alpha = 0.5f), CircleShape)
@@ -329,6 +347,30 @@ fun PetDetailScreen(
                 }
             }
             else -> {}
+        }
+
+        if (showDeleteDialog) {
+            AlertDialog(
+                onDismissRequest = { showDeleteDialog = false },
+                title = { Text("Eliminar publicación") },
+                text = { Text("¿Estás seguro de que deseas eliminar este reporte? Esta acción no se puede deshacer.") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            viewModel.deletePet(petId)
+                            showDeleteDialog = false
+                        },
+                        colors = ButtonDefaults.textButtonColors(contentColor = Color.Red)
+                    ) {
+                        Text("Eliminar")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDeleteDialog = false }) {
+                        Text("Cancelar")
+                    }
+                }
+            )
         }
     }
 }

@@ -58,4 +58,10 @@ interface PetService {
         @Part("latitud") latitud: RequestBody? = null,
         @Part("longitud") longitud: RequestBody? = null
     ): CreateMascotaResponse
+
+    /**
+     * deletePet: Elimina una publicación de mascota.
+     */
+    @DELETE("mascotas/{id}")
+    suspend fun deletePet(@Path("id") id: Int): retrofit2.Response<Unit>
 }

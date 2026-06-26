@@ -34,6 +34,7 @@ class AuthViewModel(
             try {
                 val response = userService.login(request)
                 sessionManager.saveAuthToken(response.token)
+                sessionManager.saveUserId(response.user.id ?: -1)
                 _state.value = AuthState.Success(response.user)
             } catch (e: retrofit2.HttpException) {
                 val errorBody = e.response()?.errorBody()?.string()
@@ -66,6 +67,7 @@ class AuthViewModel(
                 
                 if (token != null && user != null) {
                     sessionManager.saveAuthToken(token)
+                    user.id?.let { sessionManager.saveUserId(it) }
                     _state.value = AuthState.Success(user)
                 } else {
                     _state.value = AuthState.Error("Respuesta del servidor incompleta.")

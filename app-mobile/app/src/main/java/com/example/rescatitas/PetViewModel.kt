@@ -21,6 +21,7 @@ sealed class PetState {
     object Loading : PetState()
     data class Success(val pets: List<Pet>) : PetState()
     data class SinglePetSuccess(val pet: Pet) : PetState()
+    object DeleteSuccess : PetState()
     data class Error(val message: String) : PetState()
     data class ReportSuccess(val message: String) : PetState()
 }
@@ -41,6 +42,10 @@ class PetViewModel(
 
     fun checkIfFavorite(petId: Int) {
         _isFavorite.value = sessionManager?.isPetFavorite(petId) ?: false
+    }
+
+    fun getCurrentUserId(): Int {
+        return sessionManager?.fetchUserId() ?: -1
     }
 
     fun toggleFavorite(petId: Int) {
@@ -119,6 +124,22 @@ class PetViewModel(
                 _state.value = PetState.Error("Error ${e.code()}: No se pudo cargar el detalle")
             } catch (e: Exception) {
                 _state.value = PetState.Error(e.message ?: "Error de conexión")
+            }
+        }
+    }
+
+    fun deletePet(id: Int) {
+        viewModelScope.launch {
+            _state.value = PetState.Loading
+            try {
+                val response = petService.deletePet(id)
+                if (response.isSuccessful) {
+                    _state.value = PetState.DeleteSuccess
+                } else {
+                    _state.value = PetState.Error("No se pudo borrar la publicación: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                _state.value = PetState.Error(e.message ?: "Error al intentar borrar")
             }
         }
     }
